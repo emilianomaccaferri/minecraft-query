@@ -28,8 +28,8 @@ class Query{
       if(this.full_stat){
 
         var final = data.toString('utf-8', 11).split("\x00\x01player_\x00\x00"); // splicing the output as suggested
-        var kv = final[0].split("\0").filter(item => { return item != "" }); // clearing empty values
-        var players = final[1].split("\0").filter(item => { return item != "" }); // clearing empty values and making an array of names
+        var kv = final[0].split("\0").filter(item => { return item != "" });
+        var players = final[1].split("\0").filter(item => { return item != "" });
 
         this.emitter.emit('full_stat', {
 
@@ -75,7 +75,6 @@ class Query{
 
         // building the packet
         var token = await this._generateChallengeToken();
-        console.log(token);
         var buffer = Buffer.alloc(15) // short + byte + int32 + int32 = 11 bytes
         buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
         buffer.writeUInt8(0, 2); // 0 for stat
@@ -87,7 +86,7 @@ class Query{
 
         this.emitter.on('full_stat', stat => {
 
-          this.client.close();
+          this.full_stat = false;
           resolve(stat)
 
         })
@@ -122,7 +121,7 @@ class Query{
 
         this.emitter.on('basic_stat', stat => {
 
-          this.client.close();
+          this.basic_stat = false;
           resolve(stat)
 
         })
@@ -137,6 +136,12 @@ class Query{
       }
 
     )
+
+  }
+
+  close(){
+
+    this.client.close();
 
   }
 

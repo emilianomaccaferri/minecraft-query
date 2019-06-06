@@ -1,5 +1,6 @@
 const Query = require("./Query");
-const q = new Query({host: '', port: 25565});
+
+const q = new Query({host: 'localhost', port: 9630});
 
 q.fullStat()
   .then(success => {
@@ -13,5 +14,7 @@ q.fullStat()
   .then(success => {
 
     console.log(success);
+
+    q.close();
 
   })
