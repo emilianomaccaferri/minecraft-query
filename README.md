@@ -52,7 +52,7 @@ The object should look like this:
   version: '1.14.2',
   plugins: 'Paper on 1.14.2-R0.1-SNAPSHOT',
   map: 'world',
-  online_players: '0',
+  online_players: '4',
   max_players: '20',
   port: '9630',
   players: ['macca_ferri', 'player1', 'notch', 'jeb'] 
