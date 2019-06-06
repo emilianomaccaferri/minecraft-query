@@ -12,6 +12,30 @@ query.port=<1-65535>
 ...
 ```
 
+# Example use
+```
+const Query = require("minecraft-query");
+
+const q = new Query({host: 'localhost', port: 9630});
+
+q.fullStat()
+  .then(success => {
+
+    console.log(success);
+
+    return q.basicStat()
+
+  })
+
+  .then(success => {
+
+    console.log(success);
+
+    q.close();
+
+  })
+```
+#
 
 # API
 *class* `Query({host, port})`<br>
@@ -26,7 +50,7 @@ It returns a Query instance.<br>
 ##### Arguments: 
 * none
 
-It returns an object that corresponds to the [basic stat query type](https://wiki.vg/Query#Basic_stat).
+A promise that returns an object that corresponds to the [basic stat query type](https://wiki.vg/Query#Basic_stat).
 The object should look like this:
 ```
 { 
@@ -48,11 +72,11 @@ It ends the connection
 ##### Arguments: 
 * none
 
-It returns an object that corresponds to the [full stat query type](https://wiki.vg/Query#Full_stat).
+A promise that returns an object that corresponds to the [full stat query type](https://wiki.vg/Query#Full_stat).
 The object should look like this:
 ```
 { 
-  motd: 'Ok cuck',
+  motd: 'MOTD here',
   gametype: 'SMP',
   game_id: 'MINECRAFT',
   version: '1.14.2',
