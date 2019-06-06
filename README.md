@@ -38,6 +38,12 @@ The object should look like this:
 }
 ```
 #
+`Query#close()`
+##### Arguments: 
+* none
+
+It ends the connection
+#
 `Query#fullStat()`
 ##### Arguments: 
 * none
