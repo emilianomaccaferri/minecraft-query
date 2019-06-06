@@ -1,5 +1,6 @@
 const udp = require('dgram');
 const EventEmitter = require('events');
+const crypto = require('crypto');
 
 // https://wiki.vg/Query
 
@@ -12,6 +13,7 @@ class Query{
     this.port = obj.port;
     this.authenticating = false;
     this.basic_stat = false;
+    this.sessionid = crypto.randomBytes(4) // a safe 32-bit integer
     this.full_stat = false;
     this.client = udp.createSocket('udp4');
 
@@ -78,7 +80,7 @@ class Query{
         var buffer = Buffer.alloc(15) // short + byte + int32 + int32 = 11 bytes
         buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
         buffer.writeUInt8(0, 2); // 0 for stat
-        buffer.writeInt32BE(777, 3); // our session id
+        buffer.writeInt32BE(this.sessionid, 3); // our session id
         buffer.writeInt32BE(token, 7);
         buffer.writeInt32BE(0x00, 11)
 
@@ -115,7 +117,7 @@ class Query{
         var buffer = Buffer.alloc(11) // short + byte + int32 + int32 = 11 bytes
         buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
         buffer.writeUInt8(0, 2); // 0 is basic stat
-        buffer.writeInt32BE(777, 3); // our session id
+        buffer.writeInt32BE(this.sessionid, 3); // our session id
         buffer.writeInt32BE(token, 7);
         this.basic_stat = true;
 
@@ -155,7 +157,7 @@ class Query{
         var buffer = Buffer.alloc(7);
         buffer.writeUInt16BE(0xFEFD, 0); // magic number
         buffer.writeUInt8(9, 2); // 9 is handshake
-        buffer.writeInt32BE(777, 3); // 777 is our sessionid
+        buffer.writeInt32BE(this.sessionid, 3); // this.sessionid is our sessionid
         buffer.write("", 7); // empty payload
         this.authenticating = true;
 
