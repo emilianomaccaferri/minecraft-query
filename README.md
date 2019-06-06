@@ -1,6 +1,10 @@
 # query
 A Node.js implementation of Minecraft's query protocol
 
+# Installation
+`npm install minecraft-query`
+#
+
 # Prerequisites
 You'll first have to configure your server to recieve queries from clients.<br>
 To do so, set the `enable-query` flag to `true` in your `server.properties` file and then set the `query.port` flag as you wish. <br>
