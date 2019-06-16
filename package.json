@@ -1,6 +1,6 @@
 {
   "name": "minecraft-query",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A Node.js implementation of Minecraft's query protocol",
   "main": "Query.js",
   "scripts": {
