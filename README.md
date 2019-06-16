@@ -46,7 +46,7 @@ q.fullStat()
 ##### Arguments:
 * `host`: the address of the server
 * `port`: the query port of the server
-* `timeout`: handshake timeout
+* `timeout`: handshake timeout in ms (default 5000)
 
 It returns a Query instance.<br>
 #
