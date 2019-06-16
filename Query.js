@@ -11,7 +11,7 @@ class Query{
     this.emitter = new EventEmitter();
     this.host = obj.host;
     this.port = obj.port;
-    this.timeout = obj.timeout;
+    this.timeout = obj.timeout || 5000;
     this.authenticating = false;
     this.basic_stat = false;
     this.sessionid = crypto.randomBytes(4) // a safe 32-bit integer

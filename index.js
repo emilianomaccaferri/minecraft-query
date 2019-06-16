@@ -1,6 +1,6 @@
 const Query = require("./Query");
 
-const q = new Query({host: 'localhost', port: 5000, timeout: 5000});
+const q = new Query({host: 'localhost', port: 5000, timeout: 7500});
 
 q.fullStat()
   .then(success => {
