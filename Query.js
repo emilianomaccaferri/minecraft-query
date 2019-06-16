@@ -11,6 +11,7 @@ class Query{
     this.emitter = new EventEmitter();
     this.host = obj.host;
     this.port = obj.port;
+    this.timeout = obj.timeout;
     this.authenticating = false;
     this.basic_stat = false;
     this.sessionid = crypto.randomBytes(4) // a safe 32-bit integer
@@ -55,11 +56,11 @@ class Query{
         var final = data.toString().split('\0');
         this.emitter.emit('basic_stat', {
 
-          motd: final[3],
-          gametype: final[4],
-          map: final[5],
-          online_players: final[6],
-          max_players: final[7]
+          motd: final[5],
+          gametype: final[6],
+          map: final[7],
+          online_players: final[8],
+          max_players: final[9]
 
         })
 
@@ -161,6 +162,8 @@ class Query{
         buffer.write("", 7); // empty payload
         this.authenticating = true;
 
+        var timeout = setTimeout(function(){ throw new Error('timeout while waiting for response') }, this.timeout)
+
         this.client.send(buffer, this.port, this.host, (err) => {
 
           if(err)
@@ -168,6 +171,7 @@ class Query{
 
           this.emitter.on('challenge_token', token => {
 
+            clearTimeout(timeout)
             this.authenticating = false;
             resolve(token)
 
