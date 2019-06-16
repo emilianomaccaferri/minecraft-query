@@ -20,7 +20,7 @@ query.port=<1-65535>
 ```
 const Query = require("minecraft-query");
 
-const q = new Query({host: 'localhost', port: 9630, timeout: 5000});
+const q = new Query({host: 'localhost', port: 9630, timeout: 7500});
 
 q.fullStat()
   .then(success => {
