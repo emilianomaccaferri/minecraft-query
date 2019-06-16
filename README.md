@@ -20,7 +20,7 @@ query.port=<1-65535>
 ```
 const Query = require("minecraft-query");
 
-const q = new Query({host: 'localhost', port: 9630});
+const q = new Query({host: 'localhost', port: 9630, timeout: 5000});
 
 q.fullStat()
   .then(success => {
@@ -42,10 +42,11 @@ q.fullStat()
 #
 
 # API
-*class* `Query({host, port})`<br>
+*class* `Query({host, port, timeout})`<br>
 ##### Arguments:
 * `host`: the address of the server
 * `port`: the query port of the server
+* `timeout`: handshake timeout
 
 It returns a Query instance.<br>
 #
