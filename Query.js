@@ -4,187 +4,159 @@ const crypto = require('crypto');
 
 // https://wiki.vg/Query
 
-class Query{
-
-  constructor(obj){
-
-    this.emitter = new EventEmitter();
-    this.host = obj.host;
-    this.port = obj.port;
-    this.timeout = obj.timeout || 5000;
-    this.authenticating = false;
-    this.basic_stat = false;
-    this.sessionid = crypto.randomBytes(4) // a safe 32-bit integer
-    this.full_stat = false;
-    this.client = udp.createSocket('udp4');
-
-    this.client.on('message', (data, info) => {
-
-      if(this.authenticating){
-
-        var t = parseInt(data.toString('utf-8', 5)); // got the token!
-        this.emitter.emit('challenge_token', t);
+class Query {
+    constructor(obj) {
+        this.emitter = new EventEmitter();
+        this.host = obj.host;
+        this.port = obj.port;
+        this.timeout = obj.timeout || 5000;
         this.authenticating = false;
+        this.basic_stat = false;
+        this.sessionid = crypto.randomBytes(4) // a safe 32-bit integer
+        this.full_stat = false;
+        this.client = udp.createSocket('udp4');
+        console.log(obj.host);
 
-      }
+        this.client.on('message', (data, info) => {
 
-      if(this.full_stat){
+            if (this.authenticating) {
+                var t = parseInt(data.toString('utf-8', 5)); // got the token!
+                this.emitter.emit('challenge_token', t);
+                this.authenticating = false;
+            }
 
-        var final = data.toString('utf-8', 11).split("\x00\x01player_\x00\x00"); // splicing the output as suggested
-        var kv = final[0].split("\0").filter(item => { return item != "" });
-        var players = final[1].split("\0").filter(item => { return item != "" });
+            if (this.full_stat) {
+                var final = data.toString('utf-8', 11).split("\x00\x01player_\x00\x00"); // splicing the output as suggested
+                var kv = final[0].split("\0").filter((item) => {
+                    return item != "";
+                });
+                var players = final[1].split("\0").filter((item) => {
+                    return item != "";
+                });
 
-        this.emitter.emit('full_stat', {
+                this.emitter.emit('full_stat', {
+                    motd: kv[3],
+                    gametype: kv[5],
+                    game_id: kv[7],
+                    version: kv[9],
+                    plugins: kv[11],
+                    map: kv[13],
+                    online_players: kv[15],
+                    max_players: kv[17],
+                    port: kv[19],
+                    players
+                });
+            }
 
-          motd: kv[3],
-          gametype: kv[5],
-          game_id: kv[7],
-          version: kv[9],
-          plugins: kv[11],
-          map: kv[13],
-          online_players: kv[15],
-          max_players: kv[17],
-          port: kv[19],
-          players
+            if (this.basic_stat) {
+                var final = data.toString().split('\0');
+                this.emitter.emit('basic_stat', {
+                    motd: final[5],
+                    gametype: final[6],
+                    map: final[7],
+                    online_players: final[8],
+                    max_players: final[9]
+                });
+            }
+        });
+    }
 
-        })
+    fullStat() {
+        return new Promise(
+            async (resolve, reject) => {
 
-      }
+                // building the packet
+                try {
+                    var token = await this._generateChallengeToken();
+                } catch (err) {
+                    reject(err);
+                }
+                var buffer = Buffer.alloc(15) // short + byte + int32 + int32 = 11 bytes
+                buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
+                buffer.writeUInt8(0, 2); // 0 for stat
+                buffer.writeInt32BE(this.sessionid, 3); // our session id
+                buffer.writeInt32BE(token, 7);
+                buffer.writeInt32BE(0x00, 11);
 
-      if(this.basic_stat){
+                this.full_stat = true;
 
-        var final = data.toString().split('\0');
-        this.emitter.emit('basic_stat', {
+                this.emitter.on('full_stat', (stat) => {
+                    this.full_stat = false;
+                    resolve(stat);
+                });
 
-          motd: final[5],
-          gametype: final[6],
-          map: final[7],
-          online_players: final[8],
-          max_players: final[9]
+                this.client.send(buffer, this.port, this.host, (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                });
+            }
+        );
+    }
 
-        })
+    basicStat() {
+        return new Promise(
+            async (resolve, reject) => {
 
-      }
+                // building the packet
+                try {
+                    var token = await this._generateChallengeToken();
+                } catch (err) {
+                    reject(err);
+                }
+                var buffer = Buffer.alloc(11) // short + byte + int32 + int32 = 11 bytes
+                buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
+                buffer.writeUInt8(0, 2); // 0 is basic stat
+                buffer.writeInt32BE(this.sessionid, 3); // our session id
+                buffer.writeInt32BE(token, 7);
+                this.basic_stat = true;
 
-    })
+                this.emitter.on('basic_stat', (stat) => {
+                    this.basic_stat = false;
+                    resolve(stat);
+                });
 
-  }
+                this.client.send(buffer, this.port, this.host, (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                });
+            }
+        );
+    }
 
-  fullStat(){
+    close() {
+        this.client.close();
+    }
 
-    return new Promise(
+    _generateChallengeToken() {
+        return new Promise((resolve, reject) => {
+                // building the packet
+                var buffer = Buffer.alloc(7);
+                buffer.writeUInt16BE(0xFEFD, 0); // magic number
+                buffer.writeUInt8(9, 2); // 9 is handshake
+                buffer.writeInt32BE(this.sessionid, 3); // this.sessionid is our sessionid
+                buffer.write("", 7); // empty payload
+                this.authenticating = true;
 
-      async(resolve, reject) => {
+                var timeout = setTimeout(() => { // take advantage of lexical bindings in arrow functions
+                    reject(`Challenge token generation timeout: ${this.host}`);
+                }, this.timeout);
 
-        // building the packet
-        var token = await this._generateChallengeToken();
-        var buffer = Buffer.alloc(15) // short + byte + int32 + int32 = 11 bytes
-        buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
-        buffer.writeUInt8(0, 2); // 0 for stat
-        buffer.writeInt32BE(this.sessionid, 3); // our session id
-        buffer.writeInt32BE(token, 7);
-        buffer.writeInt32BE(0x00, 11)
+                this.client.send(buffer, this.port, this.host, (err) => {
+                    if (err) {
+                        reject(err);
+                    }
 
-        this.full_stat = true;
-
-        this.emitter.on('full_stat', stat => {
-
-          this.full_stat = false;
-          resolve(stat)
-
-        })
-
-        this.client.send(buffer, this.port, this.host, (err) => {
-
-          if(err)
-            reject(err);
-
-        })
-
-      }
-
-    )
-
-  }
-
-  basicStat(){
-
-    return new Promise(
-
-      async(resolve, reject) => {
-
-        // building the packet
-        var token = await this._generateChallengeToken();
-        var buffer = Buffer.alloc(11) // short + byte + int32 + int32 = 11 bytes
-        buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
-        buffer.writeUInt8(0, 2); // 0 is basic stat
-        buffer.writeInt32BE(this.sessionid, 3); // our session id
-        buffer.writeInt32BE(token, 7);
-        this.basic_stat = true;
-
-        this.emitter.on('basic_stat', stat => {
-
-          this.basic_stat = false;
-          resolve(stat)
-
-        })
-
-        this.client.send(buffer, this.port, this.host, (err) => {
-
-          if(err)
-            reject(err);
-
-        })
-
-      }
-
-    )
-
-  }
-
-  close(){
-
-    this.client.close();
-
-  }
-
-  _generateChallengeToken(){
-
-    return new Promise(
-
-      (resolve, reject) => {
-
-        // building the packet
-        var buffer = Buffer.alloc(7);
-        buffer.writeUInt16BE(0xFEFD, 0); // magic number
-        buffer.writeUInt8(9, 2); // 9 is handshake
-        buffer.writeInt32BE(this.sessionid, 3); // this.sessionid is our sessionid
-        buffer.write("", 7); // empty payload
-        this.authenticating = true;
-
-        var timeout = setTimeout(function(){ throw new Error('timeout while waiting for response') }, this.timeout)
-
-        this.client.send(buffer, this.port, this.host, (err) => {
-
-          if(err)
-            reject(err);
-
-          this.emitter.on('challenge_token', token => {
-
-            clearTimeout(timeout)
-            this.authenticating = false;
-            resolve(token)
-
-          })
-
-        })
-
-      }
-
-    )
-
-  }
-
+                    this.emitter.on('challenge_token', (token) => {
+                        clearTimeout(timeout);
+                        this.authenticating = false;
+                        resolve(token);
+                    });
+                });
+            }
+        );
+    }
 }
 
 module.exports = Query;
