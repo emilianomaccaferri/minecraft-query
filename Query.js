@@ -15,7 +15,6 @@ class Query {
         this.sessionid = crypto.randomBytes(4) // a safe 32-bit integer
         this.full_stat = false;
         this.client = udp.createSocket('udp4');
-        console.log(obj.host);
 
         this.client.on('message', (data, info) => {
 
