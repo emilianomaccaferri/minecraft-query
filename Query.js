@@ -26,9 +26,7 @@ class Query {
 
             if (this.full_stat) {
                 var final = data.toString('utf-8', 11).split("\x00\x01player_\x00\x00"); // splicing the output as suggested
-                var kv = final[0].split("\0").filter((item) => {
-                    return item != "";
-                });
+                var kv = final[0].split("\0");
                 var players = final[1].split("\0").filter((item) => {
                     return item != "";
                 });
