@@ -14,6 +14,7 @@ class Query {
         this.basic_stat = false;
         this.sessionid = crypto.randomBytes(4) // a safe 32-bit integer
         this.full_stat = false;
+        this.closed = false;
         this.client = udp.createSocket('udp4');
 
         this.client.on('message', (data, info) => {
@@ -63,6 +64,9 @@ class Query {
             async (resolve, reject) => {
 
                 // building the packet
+                if(this.closed)
+                  return reject(new Error('Cannot query if UDP connection is closed'))
+
                 try {
                     var token = await this._generateChallengeToken();
                 } catch (err) {
@@ -95,6 +99,9 @@ class Query {
         return new Promise(
             async (resolve, reject) => {
 
+              if(this.closed)
+                return reject(new Error('Cannot query if UDP connection is closed'))
+
                 // building the packet
                 try {
                     var token = await this._generateChallengeToken();
@@ -123,12 +130,14 @@ class Query {
     }
 
     close() {
+        this.closed = true;
         this.client.close();
     }
 
     _generateChallengeToken() {
         return new Promise((resolve, reject) => {
                 // building the packet
+
                 var buffer = Buffer.alloc(7);
                 buffer.writeUInt16BE(0xFEFD, 0); // magic number
                 buffer.writeUInt8(9, 2); // 9 is handshake
@@ -137,7 +146,7 @@ class Query {
                 this.authenticating = true;
 
                 var timeout = setTimeout(() => { // take advantage of lexical bindings in arrow functions
-                    reject(`Challenge token generation timeout: ${this.host}`);
+                    reject(new Error(`Challenge token generation timeout: ${this.host}`));
                 }, this.timeout);
 
                 this.client.send(buffer, this.port, this.host, (err) => {
