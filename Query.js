@@ -81,7 +81,7 @@ class Query {
 
                 this.full_stat = true;
 
-                this.emitter.on('full_stat', (stat) => {
+                this.emitter.once('full_stat', (stat) => {
                     this.full_stat = false;
                     resolve(stat);
                 });
@@ -115,7 +115,7 @@ class Query {
                 buffer.writeInt32BE(token, 7);
                 this.basic_stat = true;
 
-                this.emitter.on('basic_stat', (stat) => {
+                this.emitter.once('basic_stat', (stat) => {
                     this.basic_stat = false;
                     resolve(stat);
                 });
@@ -154,7 +154,7 @@ class Query {
                         reject(err);
                     }
 
-                    this.emitter.on('challenge_token', (token) => {
+                    this.emitter.once('challenge_token', (token) => {
                         clearTimeout(timeout);
                         this.authenticating = false;
                         resolve(token);
