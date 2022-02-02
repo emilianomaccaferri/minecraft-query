@@ -69,28 +69,28 @@ class Query {
 
                 try {
                     var token = await this._generateChallengeToken();
+                    var buffer = Buffer.alloc(15) // short + byte + int32 + int32 = 11 bytes
+                    buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
+                    buffer.writeUInt8(0, 2); // 0 for stat
+                    buffer.writeInt32BE(this.sessionid, 3); // our session id
+                    buffer.writeInt32BE(token, 7);
+                    buffer.writeInt32BE(0x00, 11);
+
+                    this.full_stat = true;
+
+                    this.emitter.once('full_stat', (stat) => {
+                        this.full_stat = false;
+                        resolve(stat);
+                    });
+
+                    this.client.send(buffer, this.port, this.host, (err) => {
+                        if (err) {
+                            reject(err);
+                        }
+                    });
                 } catch (err) {
                     reject(err);
                 }
-                var buffer = Buffer.alloc(15) // short + byte + int32 + int32 = 11 bytes
-                buffer.writeUInt16BE(0xFEFD, 0); // magic number, as usual
-                buffer.writeUInt8(0, 2); // 0 for stat
-                buffer.writeInt32BE(this.sessionid, 3); // our session id
-                buffer.writeInt32BE(token, 7);
-                buffer.writeInt32BE(0x00, 11);
-
-                this.full_stat = true;
-
-                this.emitter.once('full_stat', (stat) => {
-                    this.full_stat = false;
-                    resolve(stat);
-                });
-
-                this.client.send(buffer, this.port, this.host, (err) => {
-                    if (err) {
-                        reject(err);
-                    }
-                });
             }
         );
     }
