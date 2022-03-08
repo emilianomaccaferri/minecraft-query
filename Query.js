@@ -26,24 +26,31 @@ class Query {
             }
 
             if (this.full_stat) {
-                var final = data.toString('utf-8', 11).split("\x00\x01player_\x00\x00"); // splicing the output as suggested
-                var kv = final[0].split("\0");
-                var players = final[1].split("\0").filter((item) => {
-                    return item != "";
-                });
+                try {
+                    console.log(data.toString('utf-8', 11))
+                    var final = data.toString('utf-8', 11).split("\x00\x01player_\x00\x00"); // splicing the output as suggested
+                    console.log(final);
+                    var kv = final[0].split("\0");
+                    var players = final[1].split("\0").filter((item) => {
+                        return item != "";
+                    });
 
-                this.emitter.emit('full_stat', {
-                    motd: kv[3],
-                    gametype: kv[5],
-                    game_id: kv[7],
-                    version: kv[9],
-                    plugins: kv[11],
-                    map: kv[13],
-                    online_players: kv[15],
-                    max_players: kv[17],
-                    port: kv[19],
-                    players
-                });
+                    this.emitter.emit('full_stat', {
+                        motd: kv[3],
+                        gametype: kv[5],
+                        game_id: kv[7],
+                        version: kv[9],
+                        plugins: kv[11],
+                        map: kv[13],
+                        online_players: kv[15],
+                        max_players: kv[17],
+                        port: kv[19],
+                        players
+                    });
+                } catch (err) {
+                    console.log(err);
+                    throw "Uh oh.";
+                }
             }
 
             if (this.basic_stat) {
@@ -64,8 +71,8 @@ class Query {
             async (resolve, reject) => {
 
                 // building the packet
-                if(this.closed)
-                  return reject(new Error('Cannot query if UDP connection is closed'))
+                if (this.closed)
+                    return reject(new Error('Cannot query if UDP connection is closed'))
 
                 try {
                     var token = await this._generateChallengeToken();
@@ -99,8 +106,8 @@ class Query {
         return new Promise(
             async (resolve, reject) => {
 
-              if(this.closed)
-                return reject(new Error('Cannot query if UDP connection is closed'))
+                if (this.closed)
+                    return reject(new Error('Cannot query if UDP connection is closed'))
 
                 // building the packet
                 try {
@@ -118,12 +125,12 @@ class Query {
                     });
 
                     this.client.send(buffer, this.port, this.host, (err) => {
-                        if (err) reject(err);    
+                        if (err) reject(err);
                     });
                 } catch (err) {
                     reject(err);
                 }
-               
+
             }
         );
     }
@@ -135,31 +142,31 @@ class Query {
 
     _generateChallengeToken() {
         return new Promise((resolve, reject) => {
-                // building the packet
+            // building the packet
 
-                var buffer = Buffer.alloc(7);
-                buffer.writeUInt16BE(0xFEFD, 0); // magic number
-                buffer.writeUInt8(9, 2); // 9 is handshake
-                buffer.writeInt32BE(this.sessionid, 3); // this.sessionid is our sessionid
-                buffer.write("", 7); // empty payload
-                this.authenticating = true;
+            var buffer = Buffer.alloc(7);
+            buffer.writeUInt16BE(0xFEFD, 0); // magic number
+            buffer.writeUInt8(9, 2); // 9 is handshake
+            buffer.writeInt32BE(this.sessionid, 3); // this.sessionid is our sessionid
+            buffer.write("", 7); // empty payload
+            this.authenticating = true;
 
-                var timeout = setTimeout(() => { // take advantage of lexical bindings in arrow functions
-                    reject(new Error(`Challenge token generation timeout: ${this.host}`));
-                }, this.timeout);
+            var timeout = setTimeout(() => { // take advantage of lexical bindings in arrow functions
+                reject(new Error(`Challenge token generation timeout: ${this.host}`));
+            }, this.timeout);
 
-                this.client.send(buffer, this.port, this.host, (err) => {
-                    if (err) {
-                        reject(err);
-                    }
+            this.client.send(buffer, this.port, this.host, (err) => {
+                if (err) {
+                    reject(err);
+                }
 
-                    this.emitter.once('challenge_token', (token) => {
-                        clearTimeout(timeout);
-                        this.authenticating = false;
-                        resolve(token);
-                    });
+                this.emitter.once('challenge_token', (token) => {
+                    clearTimeout(timeout);
+                    this.authenticating = false;
+                    resolve(token);
                 });
-            }
+            });
+        }
         );
     }
 }
