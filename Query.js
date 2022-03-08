@@ -24,7 +24,7 @@ class Query {
                 this.emitter.emit('challenge_token', t);
                 this.authenticating = false;
             }
-
+            //Fix by @KevBelisle
             if (this.full_stat) {
                 try {
                     console.log(data.toString('utf-8', 11))
@@ -48,20 +48,23 @@ class Query {
                         players
                     });
                 } catch (err) {
-                    console.log(err);
-                    throw "Uh oh.";
+                    throw err;
                 }
             }
-
+            //Also added a catch for basic stat
             if (this.basic_stat) {
-                var final = data.toString().split('\0');
-                this.emitter.emit('basic_stat', {
-                    motd: final[5],
-                    gametype: final[6],
-                    map: final[7],
-                    online_players: final[8],
-                    max_players: final[9]
-                });
+                try {
+                    var final = data.toString().split('\0');
+                    this.emitter.emit('basic_stat', {
+                        motd: final[5],
+                        gametype: final[6],
+                        map: final[7],
+                        online_players: final[8],
+                        max_players: final[9]
+                    });
+                } catch (err) {
+                    throw err;
+                }
             }
         });
     }
