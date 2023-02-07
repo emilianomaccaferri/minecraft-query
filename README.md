@@ -16,9 +16,33 @@ query.port=<1-65535>
 ...
 ```
 
-# Example use
+# How to use in Javascript
 ```
 const Query = require("minecraft-query");
+
+const q = new Query({host: 'localhost', port: 9630, timeout: 7500});
+
+q.fullStat()
+  .then(success => {
+
+    console.log(success);
+
+    return q.basicStat()
+
+  })
+
+  .then(success => {
+
+    console.log(success);
+
+    q.close();
+
+  })
+```
+
+# How to use in Typescript
+```
+import Query from "minecraft-query";
 
 const q = new Query({host: 'localhost', port: 9630, timeout: 7500});
 

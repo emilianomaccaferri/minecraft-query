@@ -2,9 +2,11 @@
   "name": "minecraft-query",
   "version": "1.0.13",
   "description": "A Node.js implementation of Minecraft's query protocol",
-  "main": "Query.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rimraf dist/ && tsc",
+    "dev": "nodemon --watch \"./src/**/*.ts\" --exec \"ts-node\" ./src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -24,5 +26,11 @@
   "bugs": {
     "url": "https://github.com/emilianomaccaferri/query/issues"
   },
-  "homepage": "https://github.com/emilianomaccaferri/query#readme"
+  "homepage": "https://github.com/emilianomaccaferri/query#readme",
+  "devDependencies": {
+      "nodemon": "^2.0.20",
+      "rimraf": "^4.1.1",
+      "ts-node": "^10.9.1",
+      "typescript": "^4.9.4"
+  }
 }
