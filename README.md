@@ -1,3 +1,5 @@
+# warning: this package is not maintained anymore, use it at your own risk
+
 # query
 A Node.js implementation of Minecraft's query protocol
 
